@@ -1,0 +1,708 @@
+{% extends 'base.html' %}
+
+{% block title %}Editar Sitio Web - {{ business.name }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Editar Sitio Web</h1>
+                    <p class="text-sm text-gray-500 mt-1">{{ business.name }}</p>
+                </div>
+                <div class="flex items-center gap-4">
+                    <a href="{% url 'core:business_home' business.slug %}" 
+                       target="_blank"
+                       class="text-sm text-primary-600 hover:text-primary-700 font-medium">
+                        Ver Mi Sitio Web →
+                    </a>
+                    <span class="text-sm text-gray-400">|</span>
+                    <a href="{% url 'core:dashboard' business.slug %}" class="text-sm text-gray-600 hover:text-gray-900">
+                        Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+        
+        <!-- Capacidad -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-900">Capacidad (Número de Barberos)</h2>
+                    <p class="text-sm text-gray-500 mt-1">Define cuántos barberos o estaciones trabajan simultáneamente</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span id="capacity-status" class="text-sm text-gray-500 hidden"></span>
+                    <button 
+                        onclick="saveField('capacity', document.getElementById('capacity-field').value)"
+                        class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium">
+                        Guardar
+                    </button>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <input 
+                        type="number" 
+                        id="capacity-field"
+                        value="{{ business.capacity|default:1 }}"
+                        min="1"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                        placeholder="1">
+                    <p class="mt-2 text-sm text-gray-500">
+                        Si reduces la capacidad y ya tienes citas agendadas, el sistema respetará las existentes pero no permitirá nuevas reservas en esas horas saturadas.
+                    </p>
+                </div>
+                <div class="flex items-center justify-center border-2 border-dashed border-gray-300 rounded-lg p-4 bg-gray-50">
+                    <div class="text-center">
+                        <div class="text-3xl font-bold text-primary-600 mb-1" id="capacity-preview">{{ business.capacity|default:1 }}</div>
+                        <div class="text-sm text-gray-600">Barberos/Estaciones</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Descripción -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-semibold text-gray-900">Descripción del Negocio</h2>
+                <div class="flex items-center gap-2">
+                    <span id="description-status" class="text-sm text-gray-500 hidden"></span>
+                    <button 
+                        onclick="saveField('description', document.getElementById('description-field').value)"
+                        class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium">
+                        Guardar
+                    </button>
+                </div>
+            </div>
+            <textarea 
+                id="description-field"
+                rows="6" 
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                placeholder="Escribe una breve historia o descripción de tu negocio...">{{ business.description|default:"" }}</textarea>
+            <p class="mt-2 text-sm text-gray-500">Esta descripción aparecerá en tu landing page.</p>
+        </div>
+
+        <!-- Logo -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-semibold text-gray-900">Logo del Negocio</h2>
+                <div class="flex items-center gap-2">
+                    <span id="logo_url-status" class="text-sm text-gray-500 hidden"></span>
+                    <button 
+                        onclick="saveField('logo_url', document.getElementById('logo_url-field').value)"
+                        class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium">
+                        Guardar
+                    </button>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <input 
+                        type="url" 
+                        id="logo_url-field"
+                        value="{{ business.logo_url|default:"" }}"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                        placeholder="https://ejemplo.com/logo.png">
+                    <p class="mt-1 text-sm text-gray-500">URL de tu logo (puedes usar Imgur, Cloudinary, etc.)</p>
+                </div>
+                <div class="flex items-center justify-center border-2 border-dashed border-gray-300 rounded-lg p-4">
+                    {% if business.logo_url %}
+                    <img id="logo-preview" src="{{ business.logo_url }}" alt="Logo preview" class="max-h-20 max-w-full object-contain">
+                    {% else %}
+                    <div id="logo-preview" class="text-gray-400 text-sm text-center">Vista previa del logo aparecerá aquí</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Imagen Hero -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-semibold text-gray-900">Imagen Hero</h2>
+                <div class="flex items-center gap-2">
+                    <span id="hero_image_url-status" class="text-sm text-gray-500 hidden"></span>
+                    <button 
+                        onclick="saveField('hero_image_url', document.getElementById('hero_image_url-field').value)"
+                        class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium">
+                        Guardar
+                    </button>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <input 
+                        type="url" 
+                        id="hero_image_url-field"
+                        value="{{ business.hero_image_url|default:"" }}"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                        placeholder="https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&q=80">
+                    <p class="mt-1 text-sm text-gray-500">Imagen principal para la sección hero (recomendado: 1920x1080px)</p>
+                </div>
+                <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 bg-gray-50">
+                    {% if business.hero_image_url %}
+                    <img id="hero-preview" src="{{ business.hero_image_url }}" alt="Hero preview" class="w-full h-32 object-cover rounded">
+                    {% else %}
+                    <div id="hero-preview" class="text-gray-400 text-sm text-center py-8">Vista previa de la imagen hero aparecerá aquí</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Color Principal -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-semibold text-gray-900">Color de Marca</h2>
+                <div class="flex items-center gap-2">
+                    <span id="primary_color-status" class="text-sm text-gray-500 hidden"></span>
+                    <button 
+                        onclick="saveField('primary_color', document.getElementById('primary_color-field').value)"
+                        class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium">
+                        Guardar
+                    </button>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <input 
+                    type="color" 
+                    id="primary_color-color-picker"
+                    value="{{ business.primary_color|default:'#000000' }}"
+                    onchange="document.getElementById('primary_color-field').value = this.value"
+                    class="w-20 h-12 border border-gray-300 rounded-lg cursor-pointer">
+                <input 
+                    type="text" 
+                    id="primary_color-field"
+                    value="{{ business.primary_color|default:'#000000' }}"
+                    onchange="document.getElementById('primary_color-color-picker').value = this.value"
+                    class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    placeholder="#000000">
+            </div>
+            <p class="mt-2 text-sm text-gray-500">Color principal de tu marca en formato hexadecimal.</p>
+            <div class="mt-4 p-4 rounded-lg" id="color-preview" style="background-color: {{ business.primary_color|default:'#000000' }};">
+                <p class="text-white text-center font-medium">Vista previa del color</p>
+            </div>
+        </div>
+
+        <!-- Redes Sociales -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Redes Sociales</h2>
+            
+            <div class="space-y-4">
+                <!-- Instagram -->
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="block text-sm font-medium text-gray-700">URL de Instagram</label>
+                        <div class="flex items-center gap-2">
+                            <span id="instagram_url-status" class="text-sm text-gray-500 hidden"></span>
+                            <button 
+                                onclick="saveField('instagram_url', document.getElementById('instagram_url-field').value)"
+                                class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium">
+                                Guardar
+                            </button>
+                        </div>
+                    </div>
+                    <input 
+                        type="url" 
+                        id="instagram_url-field"
+                        value="{{ business.instagram_url|default:"" }}"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                        placeholder="https://instagram.com/tu_perfil"
+                        onchange="previewInstagramImage(this.value)">
+                    <p class="mt-1 text-sm text-gray-500">Pega el link de tu perfil de Instagram. Las imágenes se mostrarán automáticamente.</p>
+                    
+                    <!-- Vista previa de imágenes de Instagram -->
+                    <div id="instagram-preview" class="mt-4 hidden">
+                        <p class="text-sm font-medium text-gray-700 mb-2">Vista previa de imágenes de Instagram:</p>
+                        <div id="instagram-images" class="grid grid-cols-3 gap-2"></div>
+                    </div>
+                </div>
+                
+                <!-- Facebook -->
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="block text-sm font-medium text-gray-700">URL de Facebook</label>
+                        <div class="flex items-center gap-2">
+                            <span id="facebook_url-status" class="text-sm text-gray-500 hidden"></span>
+                            <button 
+                                onclick="saveField('facebook_url', document.getElementById('facebook_url-field').value)"
+                                class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium">
+                                Guardar
+                            </button>
+                        </div>
+                    </div>
+                    <input 
+                        type="url" 
+                        id="facebook_url-field"
+                        value="{{ business.facebook_url|default:"" }}"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                        placeholder="https://facebook.com/tu_perfil">
+                </div>
+            </div>
+        </div>
+
+        <!-- Galería - Subir Imágenes -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Galería de Trabajos - Subir Imágenes</h2>
+            
+            <!-- Área de subida de imágenes -->
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Subir Nueva Imagen</label>
+                <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-primary-500 transition-colors" id="upload-area">
+                    <input 
+                        type="file" 
+                        id="image-upload"
+                        accept="image/*"
+                        multiple
+                        class="hidden"
+                        onchange="handleImageUpload(event)">
+                    <label for="image-upload" class="cursor-pointer">
+                        <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                            <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                        <p class="mt-2 text-sm text-gray-600">
+                            <span class="font-semibold text-primary-600">Haz clic para subir</span> o arrastra imágenes aquí
+                        </p>
+                        <p class="text-xs text-gray-500 mt-1">PNG, JPG, GIF hasta 10MB</p>
+                    </label>
+                </div>
+                <div id="upload-progress" class="hidden mt-4">
+                    <div class="bg-gray-200 rounded-full h-2">
+                        <div id="progress-bar" class="bg-primary-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                    <p id="upload-status" class="text-sm text-gray-600 mt-2 text-center"></p>
+                </div>
+            </div>
+            
+            <!-- Imágenes subidas -->
+            <div class="mb-6">
+                <h3 class="text-sm font-medium text-gray-700 mb-3">Imágenes Subidas</h3>
+                <div id="uploaded-images" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                    {% for image in gallery_images %}
+                    <div class="relative group" data-image-id="{{ image.id }}">
+                        <img src="{{ image.image.url }}" alt="{{ image.caption|default:'Galería' }}" class="w-full h-32 object-cover rounded-lg">
+                        <button 
+                            onclick="deleteImage({{ image.id }})"
+                            class="absolute top-2 right-2 bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                        {% if image.caption %}
+                        <p class="text-xs text-gray-600 mt-1 truncate">{{ image.caption }}</p>
+                        {% endif %}
+                    </div>
+                    {% empty %}
+                    <div class="col-span-full text-center text-gray-400 text-sm py-8">
+                        No hay imágenes subidas. Sube tu primera imagen arriba.
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <!-- Galería JSON (URLs externas) -->
+            <div class="border-t border-gray-200 pt-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-sm font-semibold text-gray-900">O usar URLs de imágenes externas (JSON)</h3>
+                    <div class="flex items-center gap-2">
+                        <span id="gallery_json-status" class="text-sm text-gray-500 hidden"></span>
+                        <button 
+                            onclick="saveField('gallery_json', document.getElementById('gallery_json-field').value)"
+                            class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium">
+                            Guardar URLs
+                        </button>
+                    </div>
+                </div>
+                <textarea 
+                    id="gallery_json-field"
+                    rows="4" 
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 font-mono text-sm"
+                    placeholder='["https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&q=80"]'>{{ gallery_text }}</textarea>
+                <p class="mt-2 text-sm text-gray-500">Alternativamente, puedes pegar URLs de imágenes en formato JSON array.</p>
+            </div>
+        </div>
+
+        <!-- Botón de regreso -->
+        <div class="flex items-center justify-end">
+            <a href="{% url 'core:dashboard' business.slug %}" 
+               class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                Volver al Dashboard
+            </a>
+        </div>
+    </main>
+</div>
+
+<script>
+// Función para obtener el token CSRF
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Función para guardar un campo individual
+async function saveField(fieldName, fieldValue) {
+    const statusElement = document.getElementById(`${fieldName}-status`);
+    const button = event.target;
+    const originalText = button.textContent;
+    
+    // Deshabilitar botón y mostrar loading
+    button.disabled = true;
+    button.textContent = 'Guardando...';
+    if (statusElement) {
+        statusElement.classList.add('hidden');
+    }
+    
+    try {
+        const response = await fetch('{% url "core:update_business_field_api" business.slug %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                field_name: fieldName,
+                field_value: fieldValue
+            }),
+            credentials: 'same-origin'
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Mostrar mensaje de éxito
+            if (statusElement) {
+                statusElement.textContent = '✓ Guardado';
+                statusElement.classList.remove('hidden', 'text-red-500');
+                statusElement.classList.add('text-green-600');
+                setTimeout(() => {
+                    statusElement.classList.add('hidden');
+                }, 3000);
+            }
+            
+            // Actualizar vistas previas según el campo
+            updatePreview(fieldName, fieldValue);
+            
+        } else {
+            // Mostrar mensaje de error
+            if (statusElement) {
+                statusElement.textContent = '✗ Error: ' + (data.error || 'Error desconocido');
+                statusElement.classList.remove('hidden', 'text-green-600');
+                statusElement.classList.add('text-red-500');
+            }
+            alert('Error al guardar: ' + (data.error || 'Error desconocido'));
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        if (statusElement) {
+            statusElement.textContent = '✗ Error de conexión';
+            statusElement.classList.remove('hidden', 'text-green-600');
+            statusElement.classList.add('text-red-500');
+        }
+        alert('Error de conexión. Por favor, intenta de nuevo.');
+    } finally {
+        button.disabled = false;
+        button.textContent = originalText;
+    }
+}
+
+// Función para actualizar vistas previas
+function updatePreview(fieldName, fieldValue) {
+    if (fieldName === 'logo_url') {
+        const preview = document.getElementById('logo-preview');
+        if (fieldValue) {
+            preview.innerHTML = `<img src="${fieldValue}" alt="Logo preview" class="max-h-20 max-w-full object-contain" onerror="this.parentElement.innerHTML='<div class=\\'text-red-400 text-sm\\'>Error al cargar imagen</div>'">`;
+        } else {
+            preview.innerHTML = '<div class="text-gray-400 text-sm text-center">Vista previa del logo aparecerá aquí</div>';
+        }
+    } else if (fieldName === 'hero_image_url') {
+        const preview = document.getElementById('hero-preview');
+        if (fieldValue) {
+            preview.innerHTML = `<img src="${fieldValue}" alt="Hero preview" class="w-full h-32 object-cover rounded" onerror="this.parentElement.innerHTML='<div class=\\'text-red-400 text-sm py-8\\'>Error al cargar imagen</div>'">`;
+        } else {
+            preview.innerHTML = '<div class="text-gray-400 text-sm text-center py-8">Vista previa de la imagen hero aparecerá aquí</div>';
+        }
+    } else if (fieldName === 'primary_color') {
+        const preview = document.getElementById('color-preview');
+        if (preview && fieldValue) {
+            preview.style.backgroundColor = fieldValue;
+        }
+    } else if (fieldName === 'gallery_json') {
+        try {
+            const gallery = JSON.parse(fieldValue);
+            const preview = document.getElementById('gallery-preview');
+            if (preview && Array.isArray(gallery)) {
+                preview.innerHTML = gallery.map(url => `
+                    <div class="relative aspect-square overflow-hidden rounded-lg group">
+                        <img src="${url}" alt="Galería" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" onerror="this.parentElement.remove()">
+                    </div>
+                `).join('');
+            }
+        } catch (e) {
+            console.error('Error parsing gallery JSON:', e);
+        }
+    }
+}
+
+// Función para manejar la subida de imágenes
+async function handleImageUpload(event) {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+    
+    const uploadProgress = document.getElementById('upload-progress');
+    const progressBar = document.getElementById('progress-bar');
+    const uploadStatus = document.getElementById('upload-status');
+    const uploadedImages = document.getElementById('uploaded-images');
+    
+    uploadProgress.classList.remove('hidden');
+    
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        
+        // Validar tamaño (10MB)
+        if (file.size > 10 * 1024 * 1024) {
+            alert(`La imagen ${file.name} es demasiado grande. Máximo 10MB.`);
+            continue;
+        }
+        
+        // Validar tipo
+        if (!file.type.startsWith('image/')) {
+            alert(`${file.name} no es una imagen válida.`);
+            continue;
+        }
+        
+        const formData = new FormData();
+        formData.append('image', file);
+        
+        uploadStatus.textContent = `Subiendo ${file.name}...`;
+        progressBar.style.width = '50%';
+        
+        try {
+            const response = await fetch('{% url "core:upload_gallery_image" business.slug %}', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                credentials: 'same-origin'
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                progressBar.style.width = '100%';
+                uploadStatus.textContent = `✓ ${file.name} subida exitosamente`;
+                
+                // Agregar imagen a la galería
+                const imageDiv = document.createElement('div');
+                imageDiv.className = 'relative group';
+                imageDiv.setAttribute('data-image-id', data.image_id);
+                imageDiv.innerHTML = `
+                    <img src="${data.image_url}" alt="${data.caption || 'Galería'}" class="w-full h-32 object-cover rounded-lg">
+                    <button 
+                        onclick="deleteImage(${data.image_id})"
+                        class="absolute top-2 right-2 bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                    ${data.caption ? `<p class="text-xs text-gray-600 mt-1 truncate">${data.caption}</p>` : ''}
+                `;
+                
+                // Remover mensaje de "no hay imágenes" si existe
+                const emptyMessage = uploadedImages.querySelector('.col-span-full');
+                if (emptyMessage) {
+                    emptyMessage.remove();
+                }
+                
+                uploadedImages.appendChild(imageDiv);
+                
+                setTimeout(() => {
+                    progressBar.style.width = '0%';
+                    uploadStatus.textContent = '';
+                }, 2000);
+            } else {
+                uploadStatus.textContent = `✗ Error: ${data.error || 'Error desconocido'}`;
+                uploadStatus.classList.add('text-red-600');
+                alert(`Error al subir ${file.name}: ${data.error || 'Error desconocido'}`);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            uploadStatus.textContent = `✗ Error de conexión`;
+            uploadStatus.classList.add('text-red-600');
+            alert(`Error de conexión al subir ${file.name}`);
+        }
+    }
+    
+    // Resetear input
+    event.target.value = '';
+}
+
+// Función para eliminar imagen
+async function deleteImage(imageId) {
+    if (!confirm('¿Estás seguro de que quieres eliminar esta imagen?')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/{{ business.slug }}/dashboard/api/delete-image/${imageId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            credentials: 'same-origin'
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Remover imagen del DOM
+            const imageElement = document.querySelector(`[data-image-id="${imageId}"]`);
+            if (imageElement) {
+                imageElement.remove();
+            }
+            
+            // Si no quedan imágenes, mostrar mensaje
+            const uploadedImages = document.getElementById('uploaded-images');
+            if (uploadedImages.children.length === 0) {
+                uploadedImages.innerHTML = `
+                    <div class="col-span-full text-center text-gray-400 text-sm py-8">
+                        No hay imágenes subidas. Sube tu primera imagen arriba.
+                    </div>
+                `;
+            }
+        } else {
+            alert('Error al eliminar la imagen: ' + (data.error || 'Error desconocido'));
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error de conexión al eliminar la imagen');
+    }
+}
+
+// Drag and drop para subir imágenes
+document.addEventListener('DOMContentLoaded', function() {
+    const uploadArea = document.getElementById('upload-area');
+    const fileInput = document.getElementById('image-upload');
+    
+    if (uploadArea && fileInput) {
+        uploadArea.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            uploadArea.classList.add('border-primary-500', 'bg-primary-50');
+        });
+        
+        uploadArea.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('border-primary-500', 'bg-primary-50');
+        });
+        
+        uploadArea.addEventListener('drop', function(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('border-primary-500', 'bg-primary-50');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                fileInput.files = files;
+                handleImageUpload({ target: fileInput });
+            }
+        });
+    }
+});
+
+// Función para previsualizar imágenes de Instagram
+function previewInstagramImage(instagramUrl) {
+    const previewDiv = document.getElementById('instagram-preview');
+    const imagesDiv = document.getElementById('instagram-images');
+    
+    if (!instagramUrl || !instagramUrl.includes('instagram.com')) {
+        previewDiv.classList.add('hidden');
+        return;
+    }
+    
+    // Extraer el username de Instagram
+    const usernameMatch = instagramUrl.match(/instagram\.com\/([^\/\?]+)/);
+    if (!usernameMatch) {
+        previewDiv.classList.add('hidden');
+        return;
+    }
+    
+    const username = usernameMatch[1];
+    
+    // Mostrar mensaje de que se cargarán las imágenes
+    previewDiv.classList.remove('hidden');
+    imagesDiv.innerHTML = '<div class="col-span-3 text-center text-gray-500 text-sm py-4">Las imágenes de Instagram se mostrarán en la landing page</div>';
+    
+    // Nota: Para obtener imágenes reales de Instagram necesitarías usar su API
+    // Por ahora, mostramos un mensaje informativo
+}
+
+// Actualizar previews al cargar la página
+document.addEventListener('DOMContentLoaded', function() {
+    // Preview de logo
+    const logoField = document.getElementById('logo_url-field');
+    if (logoField) {
+        logoField.addEventListener('input', function() {
+            updatePreview('logo_url', this.value);
+        });
+    }
+    
+    // Preview de hero
+    const heroField = document.getElementById('hero_image_url-field');
+    if (heroField) {
+        heroField.addEventListener('input', function() {
+            updatePreview('hero_image_url', this.value);
+        });
+    }
+    
+    // Preview de color
+    const colorField = document.getElementById('primary_color-field');
+    if (colorField) {
+        colorField.addEventListener('input', function() {
+            updatePreview('primary_color', this.value);
+        });
+    }
+    
+    // Preview de galería
+    const galleryField = document.getElementById('gallery_json-field');
+    if (galleryField) {
+        galleryField.addEventListener('input', function() {
+            updatePreview('gallery_json', this.value);
+        });
+    }
+    
+    // Preview de Instagram
+    const instagramField = document.getElementById('instagram_url-field');
+    if (instagramField) {
+        instagramField.addEventListener('input', function() {
+            previewInstagramImage(this.value);
+        });
+    }
+    
+    // Preview de capacidad
+    const capacityField = document.getElementById('capacity-field');
+    if (capacityField) {
+        capacityField.addEventListener('input', function() {
+            const preview = document.getElementById('capacity-preview');
+            if (preview) {
+                const value = parseInt(this.value) || 1;
+                preview.textContent = value;
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

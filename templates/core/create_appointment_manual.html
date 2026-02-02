@@ -1,0 +1,261 @@
+{% extends 'base.html' %}
+
+{% block title %}Crear Cita Manual - {{ business.name }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Crear Cita Manual</h1>
+                    <p class="text-sm text-gray-500 mt-1">{{ business.name }} - Hoy ({{ selected_date|date:"d/m/Y" }})</p>
+                </div>
+                <a href="{% url 'core:dashboard' business.slug %}" class="text-sm text-gray-600 hover:text-gray-900">
+                    ← Volver al Dashboard
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div class="mb-6">
+                <div class="flex items-center gap-2 mb-2">
+                    <svg class="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                    <h2 class="text-lg font-semibold text-gray-900">Información del Cliente</h2>
+                </div>
+                <p class="text-sm text-gray-600">
+                    Crea una cita para hoy. Solo necesitas el teléfono del cliente.
+                </p>
+            </div>
+
+            <form method="post" class="space-y-6" id="create-appointment-form">
+                {% csrf_token %}
+                
+                <!-- Cliente Info -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Teléfono del Cliente <span class="text-red-500">*</span>
+                        </label>
+                        <input type="tel" 
+                               name="client_phone" 
+                               id="client_phone"
+                               required
+                               placeholder="+52 81 1234 5678"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Nombre (opcional)
+                        </label>
+                        <input type="text" 
+                               name="client_first_name" 
+                               placeholder="Juan"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Apellido (opcional)
+                    </label>
+                    <input type="text" 
+                           name="client_last_name" 
+                           placeholder="Pérez"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                </div>
+
+                <!-- Servicio -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Servicio <span class="text-red-500">*</span>
+                    </label>
+                    <select name="service_id" 
+                            id="service_id"
+                            required
+                            onchange="loadAvailableSlots()"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                        <option value="">Selecciona un servicio</option>
+                        {% for service in services %}
+                        <option value="{{ service.id }}" data-duration="{{ service.duration_minutes }}">
+                            {{ service.name }} - {{ service.duration_minutes }} min - ${{ service.price }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Hora -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Hora <span class="text-red-500">*</span>
+                    </label>
+                    <input type="hidden" name="time" id="selected_time" required>
+                    <div id="time-slots-container" class="mt-2">
+                        <p class="text-sm text-gray-500 mb-3">Selecciona un servicio primero para ver los horarios disponibles</p>
+                    </div>
+                </div>
+
+                <!-- Notas -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Notas (opcional)
+                    </label>
+                    <textarea name="notes" 
+                              rows="3"
+                              placeholder="Ej: Cliente prefiere corte corto, viene por primera vez, etc."
+                              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"></textarea>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="flex gap-4">
+                    <button type="submit" 
+                            class="flex-1 bg-primary-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-primary-700 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                        Crear Cita
+                    </button>
+                    <a href="{% url 'core:dashboard' business.slug %}" 
+                       class="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors">
+                        Cancelar
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        <!-- Info Box -->
+        <div class="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div class="flex items-start">
+                <svg class="w-5 h-5 text-blue-600 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <div>
+                    <p class="text-sm font-medium text-blue-900">Información importante</p>
+                    <ul class="text-sm text-blue-700 mt-1 list-disc list-inside space-y-1">
+                        <li>Solo puedes crear citas para el día de hoy.</li>
+                        <li>Si el cliente ya existe (por teléfono), se actualizará su información.</li>
+                        <li>Si es un cliente nuevo, se creará automáticamente una cuenta.</li>
+                        <li>Las citas creadas manualmente se marcan como "Confirmadas" automáticamente.</li>
+                        <li>El sistema verificará que el horario esté disponible antes de crear la cita.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+// Función para obtener el token CSRF
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+let selectedTimeSlot = null;
+
+// Función para cargar slots disponibles
+async function loadAvailableSlots() {
+    const serviceId = document.getElementById('service_id').value;
+    const date = '{{ selected_date|date:"Y-m-d" }}';
+    const slotsContainer = document.getElementById('time-slots-container');
+    
+    if (!serviceId) {
+        slotsContainer.innerHTML = '<p class="text-sm text-gray-500 mb-3">Selecciona un servicio primero para ver los horarios disponibles</p>';
+        return;
+    }
+    
+    slotsContainer.innerHTML = '<div class="text-center py-4"><div class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600"></div><p class="text-sm text-gray-500 mt-2">Cargando horarios...</p></div>';
+    
+    try {
+        const response = await fetch('{% url "core:get_available_slots_api" business.slug %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                service_id: serviceId,
+                date: date
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success && data.slots && data.slots.length > 0) {
+            slotsContainer.innerHTML = `
+                <div class="bg-gray-50 rounded-lg border border-gray-200 p-4">
+                    <p class="text-sm font-medium text-gray-700 mb-3">Horarios disponibles para hoy:</p>
+                    <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2" id="slots-grid">
+                        ${data.slots.map(slot => `
+                            <button type="button"
+                                    onclick="selectTimeSlot('${slot.time}')"
+                                    class="time-slot-btn px-3 py-2 text-sm border-2 border-gray-300 rounded-lg hover:border-primary-500 hover:bg-primary-50 text-gray-700 font-medium transition-all">
+                                ${slot.time}
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        } else {
+            slotsContainer.innerHTML = `
+                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
+                    <p class="text-yellow-800 text-sm">No hay horarios disponibles para hoy. Por favor, intenta mañana.</p>
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('Error al cargar slots:', error);
+        slotsContainer.innerHTML = `
+            <div class="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
+                <p class="text-red-800 text-sm">Error al cargar los horarios. Por favor, intenta de nuevo.</p>
+            </div>
+        `;
+    }
+}
+
+// Función para seleccionar un slot de tiempo
+function selectTimeSlot(time) {
+    selectedTimeSlot = time;
+    document.getElementById('selected_time').value = time;
+    
+    // Actualizar visualmente los botones
+    document.querySelectorAll('#slots-grid .time-slot-btn').forEach(btn => {
+        btn.classList.remove('border-primary-500', 'bg-primary-50', 'text-primary-700', 'font-semibold');
+        btn.classList.add('border-gray-300', 'text-gray-700', 'font-medium');
+    });
+    
+    event.target.classList.remove('border-gray-300', 'text-gray-700', 'font-medium');
+    event.target.classList.add('border-primary-500', 'bg-primary-50', 'text-primary-700', 'font-semibold');
+}
+
+// Validación del formulario
+document.getElementById('create-appointment-form').addEventListener('submit', function(e) {
+    const phone = document.getElementById('client_phone').value.trim();
+    const time = document.getElementById('selected_time').value;
+    
+    if (!phone) {
+        e.preventDefault();
+        alert('Debes proporcionar el teléfono del cliente.');
+        return false;
+    }
+    
+    if (!time) {
+        e.preventDefault();
+        alert('Debes seleccionar una hora.');
+        return false;
+    }
+});
+</script>
+{% endblock %}

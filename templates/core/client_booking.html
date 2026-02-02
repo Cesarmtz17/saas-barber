@@ -1,0 +1,689 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ business.name }} - Reserva tu Cita{% endblock %}
+
+{% block content %}
+<style>
+    :root {
+        --primary-color: {{ business.primary_color|default:"#000000" }};
+    }
+    .primary-color { color: var(--primary-color); }
+    .primary-bg { background-color: var(--primary-color); }
+    .primary-border { border-color: var(--primary-color); }
+    .primary-hover:hover { background-color: var(--primary-color); }
+    .font-serif { font-family: 'Georgia', 'Times New Roman', serif; }
+</style>
+
+<div class="min-h-screen bg-black text-white">
+    <!-- Header con navegación -->
+    <header class="fixed top-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-sm border-b border-gray-800">
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-8">
+                    {% if business.logo_url %}
+                    <img src="{{ business.logo_url }}" alt="{{ business.name }}" class="h-10 w-auto">
+                    {% else %}
+                    <h1 class="text-xl font-serif font-bold primary-color">{{ business.name }}</h1>
+                    {% endif %}
+                </div>
+                <div class="hidden md:flex items-center gap-6">
+                    <a href="#servicios" class="text-gray-300 hover:text-white transition-colors">Servicios</a>
+                    <a href="#galeria" class="text-gray-300 hover:text-white transition-colors">Galería</a>
+                    <a href="#ubicacion" class="text-gray-300 hover:text-white transition-colors">Ubicación</a>
+                    <a href="#reservar" class="px-4 py-2 primary-bg text-white rounded hover:opacity-90 transition-opacity">Reservar</a>
+                </div>
+                {% if user.is_authenticated and user == business.owner %}
+                <a href="{% url 'core:dashboard' business.slug %}" 
+                   class="text-sm text-gray-400 hover:text-white transition-colors">
+                    Dashboard →
+                </a>
+                {% endif %}
+            </div>
+        </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="relative min-h-screen flex items-center justify-center overflow-hidden">
+        {% if business.hero_image_url %}
+        <div class="absolute inset-0 z-0">
+            <img src="{{ business.hero_image_url }}" alt="{{ business.name }}" class="w-full h-full object-cover">
+        </div>
+        {% else %}
+        <div class="absolute inset-0 z-0">
+            <img src="https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&q=80&w=1920" alt="Barbería" class="w-full h-full object-cover">
+        </div>
+        {% endif %}
+        <div class="absolute inset-0 bg-black/70 z-10"></div>
+        <div class="relative z-20 text-center px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
+            <h1 class="text-5xl sm:text-6xl md:text-7xl font-serif font-bold mb-6 text-white">
+                {{ business.name }}
+            </h1>
+            {% if business.description %}
+            <p class="text-xl sm:text-2xl text-gray-200 mb-8 max-w-2xl mx-auto">
+                {{ business.description }}
+            </p>
+            {% else %}
+            <p class="text-xl sm:text-2xl text-gray-200 mb-8 max-w-2xl mx-auto">
+                Estilo y precisión en cada corte
+            </p>
+            {% endif %}
+            <a href="#reservar" class="inline-block px-8 py-4 primary-bg text-white text-lg font-semibold rounded-lg hover:opacity-90 transition-opacity">
+                Reservar Ahora
+            </a>
+        </div>
+    </section>
+
+    <!-- Sección de Servicios -->
+    <section id="servicios" class="py-20 bg-gray-900">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl sm:text-5xl font-serif font-bold mb-4 text-white">Nuestros Servicios</h2>
+                <p class="text-xl text-gray-400">Cada servicio diseñado para tu estilo único</p>
+            </div>
+            
+            {% if services %}
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {% for service in services %}
+                <div class="bg-black border border-gray-800 rounded-lg p-6 hover:border-gray-700 transition-colors cursor-pointer service-card" data-service-id="{{ service.id }}">
+                    <div class="mb-4">
+                        <h3 class="text-2xl font-serif font-bold text-white mb-2">{{ service.name }}</h3>
+                        <p class="text-gray-400">{{ service.duration_minutes }} minutos</p>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-3xl font-bold primary-color">${{ service.price }}</span>
+                        <button class="px-4 py-2 primary-bg text-white rounded hover:opacity-90 transition-opacity">
+                            Seleccionar
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-12">
+                <p class="text-gray-400 text-lg">No hay servicios disponibles en este momento.</p>
+            </div>
+            {% endif %}
+        </div>
+    </section>
+
+    <!-- Sección de Galería -->
+    {% if gallery_images or business.gallery_json or business.instagram_url %}
+    <section id="galeria" class="py-20 bg-black">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl sm:text-5xl font-serif font-bold mb-4 text-white">Nuestros Trabajos</h2>
+                <p class="text-xl text-gray-400">Galería de nuestros mejores cortes</p>
+            </div>
+            
+            <!-- Galería de imágenes subidas -->
+            {% if gallery_images %}
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+                {% for image in gallery_images %}
+                <div class="relative aspect-square overflow-hidden rounded-lg group cursor-pointer">
+                    <img src="{{ image.image.url }}" alt="{{ image.caption|default:'Trabajo realizado' }}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                    <div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors"></div>
+                    {% if image.caption %}
+                    <div class="absolute bottom-0 left-0 right-0 bg-black/60 text-white p-2 text-sm opacity-0 group-hover:opacity-100 transition-opacity">
+                        {{ image.caption }}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            
+            <!-- Galería de URLs externas (JSON) -->
+            {% if business.gallery_json %}
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+                {% for image_url in business.gallery_json %}
+                <div class="relative aspect-square overflow-hidden rounded-lg group cursor-pointer">
+                    <img src="{{ image_url }}" alt="Trabajo realizado" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                    <div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors"></div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            
+            <!-- Link a Instagram si existe -->
+            {% if business.instagram_url %}
+            <div class="text-center">
+                <a href="{{ business.instagram_url }}" target="_blank" rel="noopener noreferrer" 
+                   class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all font-semibold">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                    </svg>
+                    Ver más en Instagram
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- Sección de Reserva -->
+    <section id="reservar" class="py-20 bg-gray-900">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <h2 class="text-4xl sm:text-5xl font-serif font-bold mb-4 text-white">Reserva tu Cita</h2>
+                <p class="text-xl text-gray-400">Selecciona el servicio, fecha y hora que prefieras</p>
+            </div>
+
+            <!-- Selección de Servicio -->
+            {% if services %}
+            <div class="mb-8">
+                <label class="block text-sm font-medium text-gray-300 mb-3">Selecciona un Servicio</label>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {% for service in services %}
+                    <div class="service-option bg-black border-2 border-gray-800 rounded-lg p-4 cursor-pointer hover:border-gray-700 transition-colors {% if selected_service.id == service.id %}primary-border border-2{% endif %}" data-service-id="{{ service.id }}">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h3 class="text-lg font-semibold text-white">{{ service.name }}</h3>
+                                <p class="text-sm text-gray-400">{{ service.duration_minutes }} min • ${{ service.price }}</p>
+                            </div>
+                            {% if selected_service.id == service.id %}
+                            <svg class="w-6 h-6 primary-color" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                            </svg>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Selección de Fecha -->
+            {% if selected_service %}
+            <div class="mb-8">
+                <label class="block text-sm font-medium text-gray-300 mb-3">Selecciona una Fecha</label>
+                <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2">
+                    {% for date_option in date_options %}
+                    <a href="?service={{ selected_service.id }}&date={{ date_option.date|date:'Y-m-d' }}" 
+                       class="date-option-btn block text-center p-3 rounded-lg border-2 transition-all
+                       {% if date_option.date|date:'Y-m-d' == selected_date %}
+                       primary-border bg-black text-white font-semibold
+                       {% else %}
+                       border-gray-800 hover:border-gray-700 text-gray-300 font-normal
+                       {% endif %}"
+                       data-date="{{ date_option.date|date:'Y-m-d' }}">
+                        <div class="text-xs text-gray-400 mb-1">{{ date_option.day_name }}</div>
+                        <div class="text-lg font-semibold">{{ date_option.date|date:"d" }}</div>
+                        <div class="text-xs text-gray-400">{{ date_option.date|date:"M" }}</div>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Selección de Hora -->
+            {% if selected_service and selected_date %}
+            <div id="time-slots-section" class="mb-8">
+                <label class="block text-sm font-medium text-gray-300 mb-3">Selecciona una Hora</label>
+                
+                <div id="loading-slots" class="hidden text-center py-8">
+                    <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+                    <p class="text-gray-400 mt-2">Cargando horarios disponibles...</p>
+                </div>
+                
+                <div id="time-slots-container">
+                    {% if available_slots %}
+                    <div class="bg-black rounded-lg border border-gray-800 p-6">
+                        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3" id="time-slots-grid">
+                            {% for slot in available_slots %}
+                            <button onclick="selectTimeSlot(this)" 
+                                    data-datetime="{{ slot|date:'Y-m-d H:i:s' }}"
+                                    class="time-slot-btn p-3 rounded-lg border-2 border-gray-800 hover:primary-border hover:bg-black text-gray-300 font-medium transition-all text-sm">
+                                {{ slot|date:"H:i" }}
+                            </button>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="bg-yellow-900/20 border border-yellow-800 rounded-lg p-6 text-center">
+                        <p class="text-yellow-300">No hay horarios disponibles para esta fecha. Por favor, selecciona otra fecha.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Formulario de Reserva -->
+            <div id="booking-form" class="{% if not selectedTimeSlot %}hidden{% endif %} bg-black border border-gray-800 rounded-lg p-6">
+                <h3 class="text-xl font-serif font-bold text-white mb-4">Completa tu Reserva</h3>
+                
+                {% if not user.is_authenticated %}
+                <div class="space-y-4 mb-6">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Nombre *</label>
+                            <input type="text" id="client-first-name" required
+                                   class="w-full px-4 py-2 bg-gray-900 border border-gray-800 rounded-lg text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Apellido *</label>
+                            <input type="text" id="client-last-name" required
+                                   class="w-full px-4 py-2 bg-gray-900 border border-gray-800 rounded-lg text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Email *</label>
+                        <input type="email" id="client-email" required
+                               class="w-full px-4 py-2 bg-gray-900 border border-gray-800 rounded-lg text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                               placeholder="tu@email.com">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Teléfono</label>
+                        <input type="tel" id="client-phone"
+                               class="w-full px-4 py-2 bg-gray-900 border border-gray-800 rounded-lg text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                               placeholder="+52 81 1234 5678">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Contraseña *</label>
+                        <input type="password" id="client-password" required
+                               class="w-full px-4 py-2 bg-gray-900 border border-gray-800 rounded-lg text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                               placeholder="Se creará una cuenta si no existe">
+                    </div>
+                </div>
+                {% else %}
+                <div class="bg-gray-900 rounded-lg p-4 mb-4">
+                    <p class="text-sm text-gray-300">
+                        Reservando como: <span class="font-semibold text-white">{{ user.email }}</span>
+                    </p>
+                </div>
+                {% endif %}
+                
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Notas (opcional)</label>
+                    <textarea id="appointment-notes" rows="3"
+                              class="w-full px-4 py-2 bg-gray-900 border border-gray-800 rounded-lg text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                              placeholder="Alguna preferencia o comentario..."></textarea>
+                </div>
+                
+                <button onclick="submitBooking()" 
+                        class="w-full primary-bg text-white py-4 px-6 rounded-lg font-semibold text-lg hover:opacity-90 transition-opacity focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                    Confirmar Reserva
+                </button>
+            </div>
+
+            {% if request.GET.success %}
+            <div class="mt-6 bg-green-900/20 border border-green-800 rounded-lg p-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <svg class="w-5 h-5 text-green-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <p class="text-green-300 font-medium">¡Reserva creada exitosamente! Te esperamos.</p>
+                    </div>
+                    {% if user.is_authenticated %}
+                    <a href="{% url 'core:my_appointments' %}" class="text-sm text-green-400 hover:text-green-300 font-medium underline">
+                        Ver mis reservas →
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer id="ubicacion" class="bg-black border-t border-gray-800 py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+                <!-- Horarios -->
+                <div>
+                    <h3 class="text-lg font-serif font-bold text-white mb-4">Horarios</h3>
+                    {% if business.schedule_config %}
+                    <ul class="space-y-2">
+                        {% for day_key, day_config in business.schedule_config.items %}
+                        {% if day_config.enabled %}
+                        <li class="text-gray-400">
+                            {% if day_key == "monday" %}Lun
+                            {% elif day_key == "tuesday" %}Mar
+                            {% elif day_key == "wednesday" %}Mié
+                            {% elif day_key == "thursday" %}Jue
+                            {% elif day_key == "friday" %}Vie
+                            {% elif day_key == "saturday" %}Sáb
+                            {% elif day_key == "sunday" %}Dom
+                            {% else %}{{ day_key|slice:":3"|capfirst }}{% endif %}: 
+                            {{ day_config.open }} - {{ day_config.close }}
+                        </li>
+                        {% endif %}
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p class="text-gray-400">Lun - Sáb: 09:00 - 20:00</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Contacto -->
+                <div>
+                    <h3 class="text-lg font-serif font-bold text-white mb-4">Contacto</h3>
+                    {% if business.address %}
+                    <p class="text-gray-400 mb-2">{{ business.address }}</p>
+                    {% endif %}
+                    {% if business.phone %}
+                    <p class="text-gray-400 mb-2">{{ business.phone }}</p>
+                    {% endif %}
+                    {% if business.email %}
+                    <p class="text-gray-400">{{ business.email }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Redes Sociales -->
+                <div>
+                    <h3 class="text-lg font-serif font-bold text-white mb-4">Síguenos</h3>
+                    <div class="flex gap-4">
+                        {% if business.instagram_url %}
+                        <a href="{{ business.instagram_url }}" target="_blank" class="text-gray-400 hover:text-white transition-colors">
+                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                            </svg>
+                        </a>
+                        {% endif %}
+                        {% if business.facebook_url %}
+                        <a href="{{ business.facebook_url }}" target="_blank" class="text-gray-400 hover:text-white transition-colors">
+                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                            </svg>
+                        </a>
+                        {% endif %}
+                    </div>
+                    {% if not business.instagram_url and not business.facebook_url %}
+                    <p class="text-gray-400 text-sm">Próximamente en redes sociales</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="border-t border-gray-800 pt-8 text-center">
+                <p class="text-gray-400 text-sm">&copy; {{ "now"|date:"Y" }} {{ business.name }}. Todos los derechos reservados.</p>
+            </div>
+        </div>
+    </footer>
+</div>
+
+<script>
+let selectedTimeSlot = null;
+let currentServiceId = {{ selected_service.id|default:"null" }};
+let currentSelectedDate = '{{ selected_date|default:"" }}';
+
+// Función para obtener el token CSRF
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Selección de servicio
+document.addEventListener('DOMContentLoaded', function() {
+    const serviceOptions = document.querySelectorAll('.service-option');
+    serviceOptions.forEach(option => {
+        option.addEventListener('click', function() {
+            const serviceId = this.getAttribute('data-service-id');
+            window.location.href = `?service=${serviceId}`;
+        });
+    });
+});
+
+// Función para cargar slots disponibles dinámicamente
+async function loadAvailableSlots(serviceId, date) {
+    if (!serviceId || !date) {
+        return;
+    }
+    
+    const timeSlotsSection = document.getElementById('time-slots-section');
+    const container = document.getElementById('time-slots-container');
+    const loading = document.getElementById('loading-slots');
+    const grid = document.getElementById('time-slots-grid');
+    
+    if (timeSlotsSection) {
+        timeSlotsSection.classList.remove('hidden');
+    }
+    
+    if (container) container.classList.add('hidden');
+    if (loading) loading.classList.remove('hidden');
+    
+    try {
+        const response = await fetch('{% url "core:get_available_slots_api" business.slug %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                service_id: serviceId,
+                date: date
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (loading) loading.classList.add('hidden');
+        
+        if (timeSlotsSection) {
+            timeSlotsSection.classList.remove('hidden');
+        }
+        
+        if (data.success && data.slots && data.slots.length > 0) {
+            if (container) {
+                container.innerHTML = `
+                    <div class="bg-black rounded-lg border border-gray-800 p-6">
+                        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3" id="time-slots-grid">
+                            ${data.slots.map(slot => `
+                                <button onclick="selectTimeSlot(this)" 
+                                        data-datetime="${slot.datetime}"
+                                        class="time-slot-btn p-3 rounded-lg border-2 border-gray-800 hover:primary-border hover:bg-black text-gray-300 font-medium transition-all text-sm">
+                                    ${slot.time}
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+                container.classList.remove('hidden');
+            }
+        } else {
+            if (container) {
+                container.innerHTML = `
+                    <div class="bg-yellow-900/20 border border-yellow-800 rounded-lg p-6 text-center">
+                        <p class="text-yellow-300">No hay horarios disponibles para esta fecha. Por favor, selecciona otra fecha.</p>
+                    </div>
+                `;
+                container.classList.remove('hidden');
+            }
+        }
+    } catch (error) {
+        console.error('Error al cargar slots:', error);
+        if (loading) loading.classList.add('hidden');
+        if (container) {
+            container.innerHTML = `
+                <div class="bg-red-900/20 border border-red-800 rounded-lg p-6 text-center">
+                    <p class="text-red-300">Error al cargar los horarios. Por favor, intenta de nuevo.</p>
+                </div>
+            `;
+            container.classList.remove('hidden');
+        }
+    }
+}
+
+// Interceptar clicks en fechas para cargar slots dinámicamente
+document.addEventListener('DOMContentLoaded', function() {
+    const timeSlotsSection = document.getElementById('time-slots-section');
+    if (timeSlotsSection) {
+        timeSlotsSection.addEventListener('click', function(e) {
+            if (e.target.classList.contains('time-slot-btn')) {
+                selectTimeSlot(e.target);
+            }
+        });
+    }
+    
+    if (currentServiceId && currentSelectedDate) {
+        loadAvailableSlots(currentServiceId, currentSelectedDate);
+    }
+    
+    const dateButtons = document.querySelectorAll('.date-option-btn, a[href*="date="]');
+    dateButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            const href = this.getAttribute('href');
+            const dateMatch = href.match(/date=([^&]+)/);
+            if (dateMatch && currentServiceId) {
+                const date = decodeURIComponent(dateMatch[1]);
+                currentSelectedDate = date;
+                
+                document.querySelectorAll('.date-option-btn').forEach(btn => {
+                    btn.classList.remove('primary-border', 'bg-black', 'text-white', 'font-semibold');
+                    btn.classList.add('border-gray-800', 'text-gray-300', 'font-normal');
+                });
+                
+                this.classList.remove('border-gray-800', 'text-gray-300', 'font-normal');
+                this.classList.add('primary-border', 'bg-black', 'text-white', 'font-semibold');
+                
+                window.history.pushState({}, '', `?service=${currentServiceId}&date=${date}`);
+                loadAvailableSlots(currentServiceId, date);
+            } else {
+                window.location.href = href;
+            }
+        });
+    });
+});
+
+function selectTimeSlot(button) {
+    if (typeof button === 'string') {
+        const buttons = document.querySelectorAll('.time-slot-btn');
+        button = Array.from(buttons).find(btn => btn.getAttribute('data-datetime') === button);
+        if (!button) return;
+    }
+    
+    selectedTimeSlot = button.getAttribute('data-datetime');
+    
+    document.querySelectorAll('.time-slot-btn').forEach(btn => {
+        btn.classList.remove('primary-border', 'bg-black', 'text-white', 'font-semibold');
+        btn.classList.add('border-gray-800', 'text-gray-300', 'font-medium');
+    });
+    
+    button.classList.remove('border-gray-800', 'text-gray-300', 'font-medium');
+    button.classList.add('primary-border', 'bg-black', 'text-white', 'font-semibold');
+    
+    const bookingForm = document.getElementById('booking-form');
+    if (bookingForm) {
+        bookingForm.classList.remove('hidden');
+        bookingForm.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+}
+
+async function submitBooking() {
+    if (!selectedTimeSlot) {
+        alert('Por favor, selecciona una hora');
+        return;
+    }
+    
+    if (!currentServiceId) {
+        alert('Por favor, selecciona un servicio');
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('service_id', currentServiceId);
+    formData.append('start_time', selectedTimeSlot);
+    formData.append('notes', document.getElementById('appointment-notes')?.value || '');
+    
+    {% if not user.is_authenticated %}
+    const email = document.getElementById('client-email').value;
+    const password = document.getElementById('client-password').value;
+    const firstName = document.getElementById('client-first-name').value;
+    const lastName = document.getElementById('client-last-name').value;
+    
+    if (!email || !password || !firstName || !lastName) {
+        alert('Por favor, completa todos los campos requeridos.');
+        return;
+    }
+    
+    formData.append('email', email);
+    formData.append('first_name', firstName);
+    formData.append('last_name', lastName);
+    formData.append('phone', document.getElementById('client-phone').value || '');
+    formData.append('password', password);
+    {% endif %}
+    
+    const csrftoken = getCookie('csrftoken');
+    
+    if (!csrftoken) {
+        alert('Error: No se pudo obtener el token de seguridad. Por favor, recarga la página.');
+        console.error('CSRF token no encontrado');
+        return;
+    }
+    
+    const submitButton = document.querySelector('button[onclick="submitBooking()"]');
+    const originalButtonText = submitButton ? submitButton.textContent : '';
+    if (submitButton) {
+        submitButton.disabled = true;
+        submitButton.textContent = 'Procesando...';
+    }
+    
+    try {
+        const response = await fetch('{% url "core:create_appointment" business.slug %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': csrftoken
+            },
+            credentials: 'same-origin'
+        });
+        
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            const text = await response.text();
+            console.error('Respuesta no JSON:', text);
+            alert('Error inesperado del servidor. Por favor, intenta de nuevo.');
+            if (submitButton) {
+                submitButton.disabled = false;
+                submitButton.textContent = originalButtonText;
+            }
+            return;
+        }
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert('¡Reserva creada exitosamente!');
+            window.location.href = data.redirect_url || '{% url "core:client_booking" business.slug %}?success=1';
+        } else {
+            alert(data.error || 'Error al crear la reserva. Por favor, intenta de nuevo.');
+            if (submitButton) {
+                submitButton.disabled = false;
+                submitButton.textContent = originalButtonText;
+            }
+        }
+    } catch (error) {
+        console.error('Error completo:', error);
+        alert('Error al crear la reserva. Por favor, intenta de nuevo. Si el problema persiste, verifica la consola del navegador.');
+        if (submitButton) {
+            submitButton.disabled = false;
+            submitButton.textContent = originalButtonText;
+        }
+    }
+}
+
+// Smooth scroll para navegación
+document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+            target.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+
+{% block title %}SaaS Barber - Sistema de Gestión de Citas{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Hero Section -->
+    <div class="bg-gradient-to-br from-primary-600 to-primary-800 text-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+            <div class="text-center">
+                <h1 class="text-4xl sm:text-5xl font-bold mb-6">SaaS Barber</h1>
+                <p class="text-xl sm:text-2xl mb-8 text-primary-100">
+                    Sistema de Gestión de Citas Multitenant
+                </p>
+                <p class="text-lg text-primary-200 max-w-2xl mx-auto mb-12">
+                    Cada negocio tiene su propia página web profesional donde los clientes pueden reservar citas fácilmente. 
+                    Gestiona tu negocio desde un dashboard completo y moderno.
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <a href="{% url 'admin:index' %}" 
+                       class="inline-flex items-center px-6 py-3 bg-white text-primary-600 font-semibold rounded-lg hover:bg-primary-50 transition-colors">
+                        Acceder al Admin
+                    </a>
+                    <a href="{% url 'admin:index' %}" 
+                       class="inline-flex items-center px-6 py-3 border-2 border-white text-white font-semibold rounded-lg hover:bg-white hover:text-primary-600 transition-colors">
+                        Crear Cuenta
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Features Section -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl font-bold text-gray-900 mb-4">Características Principales</h2>
+            <p class="text-gray-600">Todo lo que necesitas para gestionar tu negocio</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center mb-4">
+                    <svg class="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 mb-2">Página Web Propia</h3>
+                <p class="text-gray-600">
+                    Cada negocio tiene su propia URL única y página web profesional donde los clientes pueden reservar citas.
+                </p>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
+                    <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 mb-2">Dashboard Completo</h3>
+                <p class="text-gray-600">
+                    Gestiona tus citas, servicios y horarios desde un dashboard intuitivo con vista semanal.
+                </p>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
+                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 mb-2">Reservas en Tiempo Real</h3>
+                <p class="text-gray-600">
+                    Los clientes ven la disponibilidad en tiempo real y pueden reservar directamente desde su móvil.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- CTA Section -->
+    <div class="bg-primary-600 text-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
+            <h2 class="text-3xl font-bold mb-4">¿Listo para comenzar?</h2>
+            <p class="text-xl text-primary-100 mb-8">
+                Crea tu cuenta y obtén tu propia página web para tu negocio
+            </p>
+            <a href="{% url 'admin:index' %}" 
+               class="inline-flex items-center px-8 py-4 bg-white text-primary-600 font-semibold rounded-lg hover:bg-primary-50 transition-colors text-lg">
+                Crear Mi Negocio →
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

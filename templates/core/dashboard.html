@@ -1,0 +1,826 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - {{ business.name }}{% endblock %}
+
+{% block extra_head %}
+<style>
+.appointment-block {
+    min-height: 60px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">{{ business.name }}</h1>
+                    <p class="text-sm text-gray-500 mt-1">Dashboard de Gestión</p>
+                </div>
+                <div class="flex items-center gap-4">
+                    <a href="{% url 'core:business_home' business.slug %}" 
+                       target="_blank"
+                       class="text-sm text-primary-600 hover:text-primary-700 font-medium">
+                        Ver Mi Página Web →
+                    </a>
+                    <span class="text-sm text-gray-400">|</span>
+                    <a href="{% url 'core:edit_site' business.slug %}" 
+                       class="text-sm text-gray-600 hover:text-gray-900">
+                        Editar Sitio Web
+                    </a>
+                    <span class="text-sm text-gray-400">|</span>
+                    <a href="{% url 'admin:index' %}" class="text-sm text-gray-600 hover:text-gray-900">
+                        Admin
+                    </a>
+                    <span class="text-sm text-gray-400">|</span>
+                    <span class="text-sm text-gray-600">{{ user.email }}</span>
+                    <span class="text-sm text-gray-400">|</span>
+                    <form method="post" action="{% url 'admin:logout' %}" class="inline">
+                        {% csrf_token %}
+                        <button type="submit" class="text-sm text-red-600 hover:text-red-700 font-medium">
+                            Cerrar Sesión
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
+                <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Total Hoy</p>
+                        <p class="text-2xl font-bold text-gray-900 mt-1" id="stat-total">{{ stats.total }}</p>
+                    </div>
+                    <div class="p-3 bg-blue-100 rounded-full">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Confirmadas</p>
+                        <p class="text-2xl font-bold text-green-600 mt-1" id="stat-confirmed">{{ stats.confirmed }}</p>
+                    </div>
+                    <div class="p-3 bg-green-100 rounded-full">
+                        <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Pendientes</p>
+                        <p class="text-2xl font-bold text-yellow-600 mt-1" id="stat-pending">{{ stats.pending }}</p>
+                    </div>
+                    <div class="p-3 bg-yellow-100 rounded-full">
+                        <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Completadas</p>
+                        <p class="text-2xl font-bold text-gray-900 mt-1" id="stat-completed">{{ stats.completed }}</p>
+                    </div>
+                    <div class="p-3 bg-gray-100 rounded-full">
+                        <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Capacidad (Barberos) -->
+            <a href="{% url 'core:edit_site' business.slug %}" 
+               class="bg-white rounded-lg shadow-sm p-6 border border-gray-200 hover:border-primary-500 hover:shadow-md transition-all cursor-pointer">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Capacidad</p>
+                        <p class="text-2xl font-bold text-primary-600 mt-1">{{ business.capacity|default:1 }}</p>
+                        <p class="text-xs text-gray-500 mt-1">Barberos</p>
+                    </div>
+                    <div class="p-3 bg-primary-100 rounded-full">
+                        <svg class="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                        </svg>
+                    </div>
+                </div>
+                <div class="mt-3 pt-3 border-t border-gray-200">
+                    <p class="text-xs text-primary-600 font-medium flex items-center gap-1">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                        </svg>
+                        Editar capacidad
+                    </p>
+                </div>
+            </a>
+        </div>
+
+        <!-- Date Selector -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Selecciona un Día</h2>
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-7 gap-2">
+                {% for date_option in date_options %}
+                <a href="?date={{ date_option.date|date:'Y-m-d' }}" 
+                   class="date-option-btn block text-center p-3 rounded-lg border-2 transition-all
+                   {% if date_option.is_selected and not date_option.is_today %}
+                   border-primary-500 bg-primary-50 text-primary-700 font-semibold
+                   {% elif date_option.is_today %}
+                   {% if date_option.is_selected %}
+                   border-green-500 bg-green-100 text-green-800 font-semibold
+                   {% else %}
+                   border-green-300 bg-green-50 text-green-700 font-medium
+                   {% endif %}
+                   {% else %}
+                   border-gray-200 hover:border-primary-300 text-gray-700 font-normal
+                   {% endif %}"
+                   data-is-today="{% if date_option.is_today %}true{% else %}false{% endif %}"
+                   data-is-selected="{% if date_option.is_selected %}true{% else %}false{% endif %}">
+                    <div class="text-xs {% if date_option.is_today %}text-green-600{% else %}text-gray-500{% endif %} mb-1">{{ date_option.day_name }}</div>
+                    <div class="text-lg font-semibold">{{ date_option.date|date:"d" }}</div>
+                    <div class="text-xs {% if date_option.is_today %}text-green-600{% else %}text-gray-500{% endif %}">{{ date_option.date|date:"M" }}</div>
+                    {% if date_option.is_today %}
+                    <div class="text-xs text-green-600 font-medium mt-1">Hoy</div>
+                    {% endif %}
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Appointments List -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <h2 class="text-lg font-semibold text-gray-900" id="appointments-title">
+                        Citas del {{ selected_date|date:"d/m/Y" }}
+                    </h2>
+                    <span id="auto-refresh-indicator" class="hidden inline-flex items-center gap-1 text-xs text-gray-500">
+                        <svg class="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Actualizando...
+                    </span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <a href="{% url 'core:create_appointment_manual' business.slug %}" 
+                       class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                        </svg>
+                        Crear Cita
+                    </a>
+                    <a href="{% url 'core:block_time' business.slug %}" 
+                       class="inline-flex items-center px-4 py-2 border border-yellow-300 text-sm font-medium rounded-md text-yellow-700 bg-yellow-50 hover:bg-yellow-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 transition-colors">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        Bloquear Horario
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Calendario de Horas -->
+            <div class="p-6" id="appointments-container">
+                <div class="space-y-1">
+                    {% for slot in time_slots %}
+                    {% with appointment=slot.appointment %}
+                    <div class="relative flex items-start border-b border-gray-100 hover:bg-gray-50 transition-colors {% if appointment %}min-h-[100px]{% else %}min-h-[60px]{% endif %}">
+                        <!-- Hora -->
+                        <div class="w-20 flex-shrink-0 px-3 py-4">
+                            <span class="text-sm font-semibold text-gray-700">{{ slot.time }}</span>
+                        </div>
+                        
+                        <!-- Bloque de Cita o Espacio Vacío -->
+                        <div class="flex-1 px-4 py-2">
+                            {% if appointment %}
+                            <div class="appointment-block relative group
+                                {% if appointment.is_block %}
+                                bg-gray-200 border-l-4 border-gray-400
+                                {% elif appointment.status == 'confirmed' %}
+                                bg-green-50 border-l-4 border-green-500
+                                {% elif appointment.status == 'pending' %}
+                                bg-yellow-50 border-l-4 border-yellow-500
+                                {% elif appointment.status == 'completed' %}
+                                bg-blue-50 border-l-4 border-blue-500
+                                {% elif appointment.status == 'no_show' %}
+                                bg-gray-100 border-l-4 border-gray-400
+                                {% elif appointment.status == 'cancelled' %}
+                                bg-red-50 border-l-4 border-red-500
+                                {% else %}
+                                bg-gray-50 border-l-4 border-gray-300
+                                {% endif %}
+                                rounded-lg p-3">
+                                <div class="flex items-start justify-between">
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-center gap-2 mb-1">
+                                            <h3 class="text-sm font-semibold text-gray-900 truncate">
+                                                {% if appointment.is_block %}
+                                                    🔒 BLOQUEO
+                                                {% else %}
+                                                    {{ appointment.client.get_full_name|default:appointment.client.phone|default:appointment.client.email }}
+                                                {% endif %}
+                                            </h3>
+                                            {% if not appointment.is_block %}
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
+                                                {% if appointment.status == 'confirmed' %}bg-green-100 text-green-800
+                                                {% elif appointment.status == 'pending' %}bg-yellow-100 text-yellow-800
+                                                {% elif appointment.status == 'cancelled' %}bg-red-100 text-red-800
+                                                {% elif appointment.status == 'no_show' %}bg-gray-100 text-gray-800
+                                                {% elif appointment.status == 'completed' %}bg-blue-100 text-blue-800
+                                                {% endif %}">
+                                                {{ appointment.get_status_display }}
+                                            </span>
+                                            {% endif %}
+                                        </div>
+                                        {% if not appointment.is_block %}
+                                        <p class="text-xs text-gray-600 mb-1">
+                                            <span class="font-medium">{{ appointment.service.name }}</span>
+                                            • {{ appointment.service.duration_minutes }} min
+                                            • ${{ appointment.service.price }}
+                                        </p>
+                                        {% endif %}
+                                        <p class="text-xs text-gray-500">
+                                            {{ appointment.start_time|date:"H:i" }} - {{ appointment.end_time|date:"H:i" }}
+                                            {% if appointment.client.phone and not appointment.is_block %}
+                                            • {{ appointment.client.phone }}
+                                            {% endif %}
+                                        </p>
+                                        {% if appointment.notes %}
+                                        <p class="text-xs text-gray-600 mt-1 italic">"{{ appointment.notes }}"</p>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <!-- Actions -->
+                                    <div class="flex-shrink-0 ml-4">
+                                        <div class="flex flex-col gap-2">
+                                            {% if appointment.is_block %}
+                                            <form method="post" action="{% url 'core:update_appointment_status' business.slug appointment.id %}" class="inline">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="status" value="cancelled">
+                                                <input type="hidden" name="selected_date" value="{{ selected_date|date:'Y-m-d' }}">
+                                                <button type="submit" onclick="return confirm('¿Desbloquear este horario?');" 
+                                                        class="inline-flex items-center px-3 py-1.5 text-xs font-medium border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                                                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                                    </svg>
+                                                    Desbloquear
+                                                </button>
+                                            </form>
+                                            {% elif appointment.status == 'pending' %}
+                                            <form method="post" action="{% url 'core:update_appointment_status' business.slug appointment.id %}" class="inline appointment-action-form">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="status" value="confirmed">
+                                                <input type="hidden" name="selected_date" value="{{ selected_date|date:'Y-m-d' }}">
+                                                <button type="submit" 
+                                                        class="inline-flex items-center px-3 py-1.5 text-xs font-medium border border-transparent rounded-md text-white bg-green-600 hover:bg-green-700 transition-colors">
+                                                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                                    </svg>
+                                                    Confirmar
+                                                </button>
+                                            </form>
+                                            {% endif %}
+                                            
+                                            {% if appointment.status == 'confirmed' or appointment.status == 'pending' %}
+                                            <form method="post" action="{% url 'core:update_appointment_status' business.slug appointment.id %}" class="inline appointment-action-form">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="status" value="no_show">
+                                                <input type="hidden" name="selected_date" value="{{ selected_date|date:'Y-m-d' }}">
+                                                <button type="submit" onclick="return confirm('¿Marcar como No-asistió?');" 
+                                                        class="inline-flex items-center px-3 py-1.5 text-xs font-medium border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                                                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                                    </svg>
+                                                    No-asistió
+                                                </button>
+                                            </form>
+                                            {% endif %}
+                                            
+                                            {% if appointment.status == 'confirmed' %}
+                                            <form method="post" action="{% url 'core:update_appointment_status' business.slug appointment.id %}" class="inline appointment-action-form">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="status" value="completed">
+                                                <input type="hidden" name="selected_date" value="{{ selected_date|date:'Y-m-d' }}">
+                                                <button type="submit" 
+                                                        class="inline-flex items-center px-3 py-1.5 text-xs font-medium border border-transparent rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors">
+                                                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                                    </svg>
+                                                    Completar
+                                                </button>
+                                            </form>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% else %}
+                            <div class="text-xs text-gray-400 py-2">Disponible</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endwith %}
+                    {% empty %}
+                    <div class="p-12 text-center" id="appointments-empty">
+                        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                        <h3 class="mt-2 text-sm font-medium text-gray-900">No hay horarios configurados para este día</h3>
+                        <p class="mt-1 text-sm text-gray-500">Configura los horarios de atención en el admin.</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+    // Actualizar selección visual de fechas dinámicamente
+    document.addEventListener('DOMContentLoaded', function() {
+        const dateButtons = document.querySelectorAll('.date-option-btn');
+        dateButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                // Obtener la fecha del enlace
+                const href = this.getAttribute('href');
+                if (href) {
+                    const urlParams = new URLSearchParams(href.split('?')[1]);
+                    const newDate = urlParams.get('date');
+                    if (newDate) {
+                        // Actualizar la fecha seleccionada y refrescar citas
+                        setTimeout(() => {
+                            refreshAppointments();
+                        }, 100);
+                    }
+                }
+            // Actualizar selección visual
+            document.querySelectorAll('.date-option-btn').forEach(btn => {
+                const isToday = btn.getAttribute('data-is-today') === 'true';
+                
+                // Remover selección (azul y verde intenso)
+                btn.classList.remove('border-primary-500', 'bg-primary-50', 'text-primary-700', 'font-semibold', 'border-green-500', 'bg-green-100', 'text-green-800');
+                
+                // Restaurar estado según si es hoy o no
+                if (isToday) {
+                    // Si es hoy y no está seleccionado, restaurar verde normal
+                    if (!btn.classList.contains('border-green-500') && !btn.classList.contains('border-primary-500')) {
+                        btn.classList.remove('border-gray-200', 'text-gray-700', 'font-normal', 'border-primary-500', 'bg-primary-50', 'text-primary-700');
+                        btn.classList.add('border-green-300', 'bg-green-50', 'text-green-700', 'font-medium');
+                    }
+                } else {
+                    // Si no es hoy, restaurar a gris
+                    btn.classList.remove('border-green-300', 'bg-green-50', 'text-green-700', 'font-medium', 'border-green-500', 'bg-green-100', 'text-green-800');
+                    btn.classList.add('border-gray-200', 'text-gray-700', 'font-normal');
+                }
+            });
+            
+            // Marcar la fecha seleccionada
+            const isToday = this.getAttribute('data-is-today') === 'true';
+            
+            if (isToday) {
+                // Si es hoy y se selecciona, usar verde más intenso
+                this.classList.remove('border-gray-200', 'border-green-300', 'bg-green-50', 'text-green-700', 'text-gray-700', 'font-normal', 'font-medium');
+                this.classList.add('border-green-500', 'bg-green-100', 'text-green-800', 'font-semibold');
+            } else {
+                // Si no es hoy, usar azul primario
+                this.classList.remove('border-gray-200', 'border-green-300', 'bg-green-50', 'text-green-700', 'text-gray-700', 'font-normal', 'font-medium');
+                this.classList.add('border-primary-500', 'bg-primary-50', 'text-primary-700', 'font-semibold');
+            }
+        });
+        });
+    });
+    
+    // ============================================
+    // ACTUALIZACIÓN AUTOMÁTICA EN TIEMPO REAL
+    // ============================================
+    
+    const businessSlug = '{{ business.slug }}';
+    const selectedDate = '{{ selected_date|date:"Y-m-d" }}';
+    const refreshInterval = 30000; // 30 segundos
+    let refreshTimer = null;
+    let isRefreshing = false;
+    
+    // Función para obtener el token CSRF
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    // Función para obtener el estado actual de la fecha seleccionada
+    function getCurrentSelectedDate() {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get('date') || selectedDate;
+    }
+    
+    // Función para actualizar las citas desde la API
+    async function refreshAppointments() {
+        if (isRefreshing) return;
+        
+        isRefreshing = true;
+        const indicator = document.getElementById('auto-refresh-indicator');
+        if (indicator) {
+            indicator.classList.remove('hidden');
+        }
+        
+        try {
+            const currentDate = getCurrentSelectedDate();
+            const apiUrl = `/${businessSlug}/dashboard/api/appointments/?date=${currentDate}`;
+            
+            const response = await fetch(apiUrl, {
+                method: 'GET',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                },
+                credentials: 'same-origin'
+            });
+            
+            if (!response.ok) {
+                throw new Error('Error al obtener las citas');
+            }
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                // Actualizar estadísticas
+                document.getElementById('stat-total').textContent = data.stats.total;
+                document.getElementById('stat-confirmed').textContent = data.stats.confirmed;
+                document.getElementById('stat-pending').textContent = data.stats.pending;
+                document.getElementById('stat-completed').textContent = data.stats.completed;
+                
+                // Actualizar título
+                const titleElement = document.getElementById('appointments-title');
+                if (titleElement) {
+                    titleElement.textContent = `Citas del ${data.date_display}`;
+                }
+                
+                // Actualizar calendario de horas
+                updateTimeSlotsCalendar(data.time_slots);
+            }
+        } catch (error) {
+            console.error('Error al actualizar citas:', error);
+        } finally {
+            isRefreshing = false;
+            if (indicator) {
+                indicator.classList.add('hidden');
+            }
+        }
+    }
+    
+    // Función para actualizar el calendario de horas
+    function updateTimeSlotsCalendar(timeSlots) {
+        const container = document.getElementById('appointments-container');
+        if (!container) return;
+        
+        if (!timeSlots || timeSlots.length === 0) {
+            container.innerHTML = `
+                <div class="p-12 text-center">
+                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                    <h3 class="mt-2 text-sm font-medium text-gray-900">No hay horarios configurados para este día</h3>
+                </div>
+            `;
+            return;
+        }
+        
+        container.innerHTML = `
+            <div class="space-y-1">
+                ${timeSlots.map(slot => renderTimeSlot(slot)).join('')}
+            </div>
+        `;
+    }
+    
+    // Función para renderizar un slot de tiempo
+    function renderTimeSlot(slot) {
+        const apt = slot.appointment;
+        
+        if (apt && apt.start_time === slot.time) {
+            const statusColors = {
+                'pending': 'bg-yellow-50 border-yellow-500',
+                'confirmed': 'bg-green-50 border-green-500',
+                'cancelled': 'bg-red-50 border-red-500',
+                'no_show': 'bg-gray-100 border-gray-400',
+                'completed': 'bg-blue-50 border-blue-500'
+            };
+            
+            const statusColor = apt.is_block ? 'bg-gray-200 border-gray-400' : (statusColors[apt.status] || 'bg-gray-50 border-gray-300');
+            const statusBadgeColors = {
+                'pending': 'bg-yellow-100 text-yellow-800',
+                'confirmed': 'bg-green-100 text-green-800',
+                'cancelled': 'bg-red-100 text-red-800',
+                'no_show': 'bg-gray-100 text-gray-800',
+                'completed': 'bg-blue-100 text-blue-800'
+            };
+            const statusBadgeColor = apt.is_block ? 'bg-gray-200 text-gray-700' : (statusBadgeColors[apt.status] || 'bg-gray-100 text-gray-800');
+            
+            let actionsHtml = '';
+            if (apt.is_block) {
+                actionsHtml = `
+                    <form method="post" action="/${businessSlug}/dashboard/cita/${apt.id}/actualizar/" class="inline">
+                        <input type="hidden" name="csrfmiddlewaretoken" value="${getCookie('csrftoken')}">
+                        <input type="hidden" name="status" value="cancelled">
+                        <input type="hidden" name="selected_date" value="${apt.start_datetime.split(' ')[0]}">
+                        <button type="submit" onclick="return confirm('¿Desbloquear este horario?');" 
+                                class="inline-flex items-center px-3 py-1.5 text-xs font-medium border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                            <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                            Desbloquear
+                        </button>
+                    </form>
+                `;
+            } else {
+                if (apt.status === 'pending') {
+                    actionsHtml += `
+                        <form method="post" action="/${businessSlug}/dashboard/cita/${apt.id}/actualizar/" class="inline appointment-action-form">
+                            <input type="hidden" name="csrfmiddlewaretoken" value="${getCookie('csrftoken')}">
+                            <input type="hidden" name="status" value="confirmed">
+                            <input type="hidden" name="selected_date" value="${apt.start_datetime.split(' ')[0]}">
+                            <button type="submit" class="inline-flex items-center px-3 py-1.5 text-xs font-medium border border-transparent rounded-md text-white bg-green-600 hover:bg-green-700 transition-colors">
+                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                                Confirmar
+                            </button>
+                        </form>
+                    `;
+                }
+                if (apt.status === 'confirmed' || apt.status === 'pending') {
+                    actionsHtml += `
+                        <form method="post" action="/${businessSlug}/dashboard/cita/${apt.id}/actualizar/" class="inline appointment-action-form">
+                            <input type="hidden" name="csrfmiddlewaretoken" value="${getCookie('csrftoken')}">
+                            <input type="hidden" name="status" value="no_show">
+                            <input type="hidden" name="selected_date" value="${apt.start_datetime.split(' ')[0]}">
+                            <button type="submit" onclick="return confirm('¿Marcar como No-asistió?');" 
+                                    class="inline-flex items-center px-3 py-1.5 text-xs font-medium border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                                No-asistió
+                            </button>
+                        </form>
+                    `;
+                }
+                if (apt.status === 'confirmed') {
+                    actionsHtml += `
+                        <form method="post" action="/${businessSlug}/dashboard/cita/${apt.id}/actualizar/" class="inline appointment-action-form">
+                            <input type="hidden" name="csrfmiddlewaretoken" value="${getCookie('csrftoken')}">
+                            <input type="hidden" name="status" value="completed">
+                            <input type="hidden" name="selected_date" value="${apt.start_datetime.split(' ')[0]}">
+                            <button type="submit" class="inline-flex items-center px-3 py-1.5 text-xs font-medium border border-transparent rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors">
+                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                                Completar
+                            </button>
+                        </form>
+                    `;
+                }
+            }
+            
+            return `
+                <div class="relative flex items-start border-b border-gray-100 hover:bg-gray-50 transition-colors min-h-[100px]">
+                    <div class="w-20 flex-shrink-0 px-3 py-4">
+                        <span class="text-sm font-semibold text-gray-700">${slot.time}</span>
+                    </div>
+                    <div class="flex-1 px-4 py-2">
+                        <div class="appointment-block relative group ${statusColor} border-l-4 rounded-lg p-3">
+                            <div class="flex items-start justify-between">
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <h3 class="text-sm font-semibold text-gray-900 truncate">
+                                            ${apt.is_block ? '🔒 BLOQUEO' : apt.client_name}
+                                        </h3>
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${statusBadgeColor}">
+                                            ${apt.is_block ? 'Bloqueo' : apt.status_display}
+                                        </span>
+                                    </div>
+                                    ${apt.is_block ? `
+                                        <p class="text-xs text-gray-600 mb-1">
+                                            <span class="font-medium">Horario bloqueado</span>
+                                            ${apt.notes ? ` • ${apt.notes}` : ''}
+                                        </p>
+                                    ` : `
+                                        <p class="text-xs text-gray-600 mb-1">
+                                            <span class="font-medium">${apt.service_name}</span>
+                                            • ${apt.service_duration} min
+                                            • $${apt.service_price}
+                                        </p>
+                                    `}
+                                    <p class="text-xs text-gray-500">
+                                        ${apt.start_time} - ${apt.end_time}
+                                        ${apt.client_phone ? ` • ${apt.client_phone}` : ''}
+                                    </p>
+                                    ${apt.notes ? `<p class="text-xs text-gray-600 mt-1 italic">"${apt.notes}"</p>` : ''}
+                                </div>
+                                <div class="flex-shrink-0 ml-4">
+                                    <div class="flex flex-col gap-2">
+                                        ${actionsHtml}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        } else {
+            return `
+                <div class="relative flex items-start border-b border-gray-100 hover:bg-gray-50 transition-colors min-h-[60px]">
+                    <div class="w-20 flex-shrink-0 px-3 py-4">
+                        <span class="text-sm font-semibold text-gray-700">${slot.time}</span>
+                    </div>
+                    <div class="flex-1 px-4 py-2">
+                        <div class="text-xs text-gray-400 py-2">Disponible</div>
+                    </div>
+                </div>
+            `;
+        }
+    }
+    
+    // Función para renderizar una cita en HTML (legacy, mantener por compatibilidad)
+    function renderAppointment(apt) {
+        const statusColors = {
+            'pending': 'bg-yellow-100 text-yellow-800',
+            'confirmed': 'bg-green-100 text-green-800',
+            'cancelled': 'bg-red-100 text-red-800',
+            'no_show': 'bg-gray-100 text-gray-800',
+            'completed': 'bg-blue-100 text-blue-800'
+        };
+        
+        const statusColor = statusColors[apt.status] || 'bg-gray-100 text-gray-800';
+        
+        let actionsHtml = '';
+        
+        if (apt.is_block) {
+            actionsHtml = `
+                <form method="post" action="/${businessSlug}/dashboard/cita/${apt.id}/actualizar/" class="inline">
+                    <input type="hidden" name="csrfmiddlewaretoken" value="${getCookie('csrftoken')}">
+                    <input type="hidden" name="status" value="cancelled">
+                    <input type="hidden" name="selected_date" value="${apt.start_datetime.split(' ')[0]}">
+                    <button type="submit" onclick="return confirm('¿Desbloquear este horario?');" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors">
+                        Desbloquear
+                    </button>
+                </form>
+            `;
+        } else {
+            if (apt.status === 'pending') {
+                actionsHtml += `
+                    <form method="post" action="/${businessSlug}/dashboard/cita/${apt.id}/actualizar/" class="inline">
+                        <input type="hidden" name="csrfmiddlewaretoken" value="${getCookie('csrftoken')}">
+                        <input type="hidden" name="status" value="confirmed">
+                        <input type="hidden" name="selected_date" value="${apt.start_datetime.split(' ')[0]}">
+                        <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors">
+                            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            Confirmar
+                        </button>
+                    </form>
+                `;
+            }
+            
+            if (apt.status === 'confirmed' || apt.status === 'pending') {
+                actionsHtml += `
+                    <form method="post" action="/${businessSlug}/dashboard/cita/${apt.id}/actualizar/" class="inline">
+                        <input type="hidden" name="csrfmiddlewaretoken" value="${getCookie('csrftoken')}">
+                        <input type="hidden" name="status" value="no_show">
+                        <input type="hidden" name="selected_date" value="${apt.start_datetime.split(' ')[0]}">
+                        <button type="submit" onclick="return confirm('¿Marcar esta cita como No-asistió?');" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors">
+                            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                            No-asistió
+                        </button>
+                    </form>
+                `;
+            }
+            
+            if (apt.status === 'confirmed') {
+                actionsHtml += `
+                    <form method="post" action="/${businessSlug}/dashboard/cita/${apt.id}/actualizar/" class="inline">
+                        <input type="hidden" name="csrfmiddlewaretoken" value="${getCookie('csrftoken')}">
+                        <input type="hidden" name="status" value="completed">
+                        <input type="hidden" name="selected_date" value="${apt.start_datetime.split(' ')[0]}">
+                        <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                            Completar
+                        </button>
+                    </form>
+                `;
+            }
+        }
+        
+        return `
+            <div class="p-6 hover:bg-gray-50 transition-colors">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div class="flex-1">
+                        <div class="flex items-start gap-4">
+                            <div class="flex-shrink-0">
+                                <div class="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center">
+                                    <span class="text-primary-600 font-semibold text-sm">${apt.start_time}</span>
+                                </div>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-2 mb-1">
+                                    <h3 class="text-base font-semibold text-gray-900">
+                                        ${apt.is_block ? '🔒 BLOQUEO' : apt.client_name}
+                                    </h3>
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${apt.is_block ? 'bg-gray-200 text-gray-700' : statusColor}">
+                                        ${apt.is_block ? 'Bloqueo' : apt.status_display}
+                                    </span>
+                                </div>
+                                ${apt.is_block ? `
+                                    <p class="text-sm text-gray-600 mb-1">
+                                        <span class="font-medium">Horario bloqueado</span>
+                                        ${apt.notes ? ` • ${apt.notes}` : ''}
+                                    </p>
+                                ` : `
+                                    <p class="text-sm text-gray-600 mb-1">
+                                        <span class="font-medium">${apt.service_name}</span>
+                                        • ${apt.service_duration} min
+                                        • $${apt.service_price}
+                                    </p>
+                                `}
+                                <p class="text-xs text-gray-500">
+                                    ${apt.start_time} - ${apt.end_time}
+                                    ${apt.client_phone ? ` • ${apt.client_phone}` : ''}
+                                </p>
+                                ${apt.notes ? `<p class="text-sm text-gray-600 mt-2 italic">"${apt.notes}"</p>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap gap-2 sm:flex-nowrap">
+                        ${actionsHtml}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Iniciar actualización automática
+    function startAutoRefresh() {
+        // Actualizar inmediatamente al cargar
+        refreshAppointments();
+        
+        // Configurar actualización periódica
+        refreshTimer = setInterval(refreshAppointments, refreshInterval);
+    }
+    
+    // Detener actualización automática cuando la página no está visible
+    document.addEventListener('visibilitychange', function() {
+        if (document.hidden) {
+            if (refreshTimer) {
+                clearInterval(refreshTimer);
+                refreshTimer = null;
+            }
+        } else {
+            if (!refreshTimer) {
+                startAutoRefresh();
+            }
+        }
+    });
+    
+    // Iniciar cuando la página carga
+    startAutoRefresh();
+    
+    // Actualizar automáticamente después de acciones (confirmar, no-asistió, etc.)
+    document.addEventListener('submit', function(e) {
+        const form = e.target;
+        if (form && form.classList.contains('appointment-action-form')) {
+            // Esperar a que se complete la acción y luego refrescar
+            setTimeout(() => {
+                refreshAppointments();
+            }, 500);
+        }
+    });
+</script>
+{% endblock %}
